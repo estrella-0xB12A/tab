@@ -9,7 +9,7 @@
 :root {
   --bg: #0c0c0c;
   --text: #dadde1;
-  --dim: #6c7078;
+  --dim: #4e5157;
 }
 
 * { box-sizing: border-box; }
@@ -67,22 +67,29 @@ main {
   text-align: center;
 }
 
-#clock {
+#clock, #greeting {
   position: fixed;
   bottom: 1rem;
-  right: 1.25rem;
   font-size: 0.9rem;
   color: var(--dim);
-  font-variant-numeric: tabular-nums;
   letter-spacing: 0.02em;
   user-select: none;
   pointer-events: none;
 }
 
-#clock[hidden] { display: none; }
+#clock {
+  right: 1.25rem;
+  font-variant-numeric: tabular-nums;
+}
+
+#greeting {
+  left: 1.25rem;
+}
+
+#clock[hidden], #greeting[hidden] { display: none; }
 
 @media (prefers-reduced-motion: no-preference) {
-  main, #clock {
+  main, #clock, #greeting {
     animation: fade-in 180ms ease-out;
   }
 }

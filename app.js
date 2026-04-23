@@ -23,11 +23,13 @@ let draft = "";
 const input = document.getElementById("input");
 const messageEl = document.getElementById("message");
 const clockEl = document.getElementById("clock");
+const greetingEl = document.getElementById("greeting");
 
 const commands = {
   g:   args => args.length ? `https://www.google.com/search?q=${enc(args)}` : "https://www.google.com",
   r:   args => args.length ? `https://www.reddit.com/r/${enc(args)}`       : "https://www.reddit.com",
   y:   args => args.length ? `https://www.youtube.com/results?search_query=${enc(args)}` : "https://www.youtube.com",
+  gh:  args => args.length ? `https://github.com/${args.join("")}` : "https://github.com",
   gc:  ()   => "https://calendar.google.com",
   img: args => args.length ? `https://www.google.com/search?tbm=isch&q=${enc(args)}` : "https://www.google.com",
   gm:  args => args.length ? `https://mail.google.com/mail/u/0/#search/${enc(args)}` : "https://mail.google.com",
@@ -223,6 +225,7 @@ function showHelp() {
     "  g;<query> — google",
     "  r;<sub> — reddit",
     "  y;<query> — youtube",
+    "  gh;<user/repo> — github",
     "  gc — google calendar",
     "  img;<query> — google images",
     "  gm;<query> — gmail",
@@ -265,7 +268,18 @@ function updateClock() {
     clockEl.textContent = `${h}:${minutes} ${ampm}`;
   }
 }
-setInterval(updateClock, 1000);
+
+function updateGreeting() {
+  const h = new Date().getHours();
+  let when;
+  if (h >= 5 && h < 12)       when = "good morning";
+  else if (h >= 12 && h < 17) when = "good afternoon";
+  else if (h >= 17 && h < 22) when = "good evening";
+  else                        when = "late one";
+  greetingEl.textContent = `${when}, Estrella`;
+}
+
+setInterval(() => { updateClock(); updateGreeting(); }, 1000);
 
 function loadHistory() {
   try {
@@ -367,4 +381,5 @@ loadHistory();
 loadConfig();
 applyTheme();
 updateClock();
+updateGreeting();
 claimFocus();

@@ -33,11 +33,12 @@ If your input doesn't match a command, a custom link, or a URL, it falls through
 | `g` | Google search | `g;typescript generics` |
 | `r` | Reddit (subreddit) | `r;selfhosted` |
 | `y` | YouTube search | `y;lofi mix` |
+| `gh` | GitHub (path, not search) | `gh;torvalds/linux` |
 | `gc` | Google Calendar | `gc` |
 | `img` | Google Images | `img;sunset wallpaper` |
 | `gm` | Gmail search | `gm;invoice` |
 
-Each command with no argument just opens the site's homepage: `g` → google.com, `y` → youtube.com, etc.
+Each command with no argument just opens the site's homepage: `g` → google.com, `y` → youtube.com, etc. `gh` takes a GitHub path (user, user/repo, org, etc.) rather than a search query; for searching GitHub use `g;github <query>`.
 
 ---
 
@@ -96,6 +97,10 @@ set;clock;12      12-hour format (e.g. "9:42 pm")
 set;clock;24      24-hour format (e.g. "21:42")
 set;clock         show current state
 ```
+
+## Greeting
+
+A time-aware greeting always shows in the bottom-left: "good morning, Estrella" / "good afternoon, Estrella" / "good evening, Estrella" / "late one, Estrella". To change the name, edit the `updateGreeting()` function in `app.js`.
 
 ---
 
