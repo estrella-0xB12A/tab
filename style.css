@@ -10,6 +10,10 @@
   --bg: #0c0c0c;
   --text: #dadde1;
   --dim: #4e5157;
+  --clock-size: 0.9rem;
+  --clock-color: #4e5157;
+  --greeting-size: 1rem;
+  --greeting-color: #4e5157;
 }
 
 * { box-sizing: border-box; }
@@ -67,29 +71,32 @@ main {
   text-align: center;
 }
 
-#clock, #greeting {
+#clock {
   position: fixed;
   bottom: 1rem;
-  font-size: 0.9rem;
-  color: var(--dim);
+  right: 1.25rem;
+  font-size: var(--clock-size);
+  color: var(--clock-color);
+  font-variant-numeric: tabular-nums;
   letter-spacing: 0.02em;
   user-select: none;
   pointer-events: none;
 }
 
-#clock {
-  right: 1.25rem;
-  font-variant-numeric: tabular-nums;
-}
+#clock[hidden] { display: none; }
 
 #greeting {
-  left: 1.25rem;
+  font-size: var(--greeting-size);
+  color: var(--greeting-color);
+  letter-spacing: 0.02em;
+  text-align: center;
+  user-select: none;
 }
 
-#clock[hidden], #greeting[hidden] { display: none; }
+#greeting[hidden] { display: none; }
 
 @media (prefers-reduced-motion: no-preference) {
-  main, #clock, #greeting {
+  main, #clock {
     animation: fade-in 180ms ease-out;
   }
 }

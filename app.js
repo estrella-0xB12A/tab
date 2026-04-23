@@ -9,6 +9,11 @@ const DEFAULTS = {
   fontSize: "1.75rem",
   showClock: false,
   militaryClock: false,
+  clockSize: "0.9rem",
+  clockColor: "#4e5157",
+  showGreeting: true,
+  greetingSize: "1rem",
+  greetingColor: "#4e5157",
 };
 
 let CONFIG = { ...DEFAULTS };
@@ -110,13 +115,16 @@ function ensureProtocol(s) {
   return s.includes("://") ? s : "https://" + s;
 }
 
+const COLOR_PROPS = ["bgColor", "textColor", "clockColor", "greetingColor"];
+const SIZE_PROPS  = ["fontSize", "clockSize", "greetingSize"];
+
 function setProp(args) {
   if (!args.length) {
-    return msg("usage: set;<property>;<value>\nproperties: bgColor, textColor, fontSize, clock, defaultCommand, newtab, reset");
+    return msg("usage: set;<property>;<value>\nproperties: bgColor, textColor, fontSize,\nclock, clockSize, clockColor,\ngreeting, greetingSize, greetingColor,\ndefaultCommand, newtab, reset");
   }
   const [prop, value] = args;
 
-  if (prop === "bgColor" || prop === "textColor") {
+  if (COLOR_PROPS.includes(prop)) {
     if (value === undefined) return msg(`${prop}: ${CONFIG[prop]}`);
     if (!/^#[0-9a-f]{3}(?:[0-9a-f]{3})?$/i.test(value)) return msg("invalid hex color (#rgb or #rrggbb)");
     CONFIG[prop] = value;
@@ -125,13 +133,22 @@ function setProp(args) {
     return msg(`${prop} → ${value}`);
   }
 
-  if (prop === "fontSize") {
-    if (value === undefined) return msg(`fontSize: ${CONFIG.fontSize}`);
+  if (SIZE_PROPS.includes(prop)) {
+    if (value === undefined) return msg(`${prop}: ${CONFIG[prop]}`);
     if (!/^[\d.]+(rem|em|px|%)$/.test(value)) return msg("invalid size (use rem, em, px, or %)");
-    CONFIG.fontSize = value;
+    CONFIG[prop] = value;
     applyTheme();
     saveConfig();
-    return msg(`fontSize → ${value}`);
+    return msg(`${prop} → ${value}`);
+  }
+
+  if (prop === "greeting") {
+    if (value === undefined) return msg(`greeting: ${CONFIG.showGreeting ? "on" : "off"}`);
+    if (value !== "on" && value !== "off") return msg("must be on or off");
+    CONFIG.showGreeting = value === "on";
+    updateGreeting();
+    saveConfig();
+    return msg(`greeting → ${value}`);
   }
 
   if (prop === "clock") {
@@ -169,6 +186,7 @@ function setProp(args) {
     CONFIG = { ...DEFAULTS };
     applyTheme();
     updateClock();
+    updateGreeting();
     saveConfig();
     return msg("reset to defaults");
   }
@@ -233,7 +251,8 @@ function showHelp() {
     "meta",
     "  set;<prop>;<value>",
     "    bgColor | textColor | fontSize",
-    "    clock (on | off | 12 | 24)",
+    "    clock (on | off | 12 | 24) | clockSize | clockColor",
+    "    greeting (on | off) | greetingSize | greetingColor",
     "    defaultCommand | newtab | reset",
     "  link;add;<name>;<url>;[search]",
     "  link;show · link;delete;<name>",
@@ -248,6 +267,10 @@ function applyTheme() {
   const root = document.documentElement;
   root.style.setProperty("--bg", CONFIG.bgColor);
   root.style.setProperty("--text", CONFIG.textColor);
+  root.style.setProperty("--clock-size", CONFIG.clockSize);
+  root.style.setProperty("--clock-color", CONFIG.clockColor);
+  root.style.setProperty("--greeting-size", CONFIG.greetingSize);
+  root.style.setProperty("--greeting-color", CONFIG.greetingColor);
   document.body.style.fontSize = CONFIG.fontSize;
 }
 
@@ -270,12 +293,17 @@ function updateClock() {
 }
 
 function updateGreeting() {
+  if (!CONFIG.showGreeting) {
+    greetingEl.hidden = true;
+    return;
+  }
+  greetingEl.hidden = false;
   const h = new Date().getHours();
   let when;
-  if (h >= 5 && h < 12)       when = "good morning";
-  else if (h >= 12 && h < 17) when = "good afternoon";
-  else if (h >= 17 && h < 22) when = "good evening";
-  else                        when = "late one";
+  if (h >= 5 && h < 12)       when = "Good Morning";
+  else if (h >= 12 && h < 17) when = "Good Afternoon";
+  else if (h >= 17 && h < 22) when = "Good Evening";
+  else                        when = "Late Night";
   greetingEl.textContent = `${when}, Estrella`;
 }
 

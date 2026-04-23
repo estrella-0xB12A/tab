@@ -1,8 +1,8 @@
 # tab
 
-A minimal, keyboard-driven startpage. Live at **https://estrella-0xb12a.github.io/tab/**.
+A minimal, keyboard-driven startpage.
 
-Set it as Brave's custom home URL (**Settings → Appearance → Show home button → Enter custom web address**), then press **Alt+Home** to open it with focus already in the input.
+Deployed as a static page (GitHub Pages or anywhere else that serves static files). Set the deployed URL as your browser's custom home URL — in Brave: **Settings → Appearance → Show home button → Enter custom web address** — then press **Alt+Home** to open it with focus already in the input.
 
 ---
 
@@ -78,11 +78,16 @@ set;<property>;<value>
 | `textColor` | `#rgb` or `#rrggbb` | input + caret color |
 | `fontSize` | `1.5rem`, `24px`, `110%`, etc. | accepts rem/em/px/% |
 | `clock` | `on` / `off` / `12` / `24` | see below |
+| `clockSize` | size (rem/em/px/%) | clock text size |
+| `clockColor` | `#rgb` or `#rrggbb` | clock text color |
+| `greeting` | `on` / `off` | show or hide the greeting |
+| `greetingSize` | size (rem/em/px/%) | greeting text size |
+| `greetingColor` | `#rgb` or `#rrggbb` | greeting text color |
 | `defaultCommand` | any built-in command | what runs when input matches nothing |
 | `newtab` | `on` / `off` | open every result in a new tab |
 | `reset` | *(no value)* | reset everything to defaults |
 
-Leave the value off to just show the current setting: `set;bgColor`, `set;fontSize`, etc.
+Leave the value off to just show the current setting: `set;bgColor`, `set;greetingSize`, etc.
 
 ---
 
@@ -100,7 +105,7 @@ set;clock         show current state
 
 ## Greeting
 
-A time-aware greeting always shows in the bottom-left: "good morning, Estrella" / "good afternoon, Estrella" / "good evening, Estrella" / "late one, Estrella". To change the name, edit the `updateGreeting()` function in `app.js`.
+A time-aware greeting sits above the input: "Good Morning, Estrella" / "Good Afternoon, Estrella" / "Good Evening, Estrella" / "Late Night, Estrella". Toggle or restyle with `set;greeting;(on|off)`, `set;greetingSize;<size>`, `set;greetingColor;#hex`. To change the name itself, edit the `updateGreeting()` function in `app.js`.
 
 ---
 
