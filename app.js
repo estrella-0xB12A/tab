@@ -285,46 +285,23 @@ function pushHistory(cmd) {
   } catch {}
 }
 
-const hasExtensionStorage = typeof chrome !== "undefined" && chrome?.storage?.sync;
 const LOCAL_KEY = "tab-config";
 
-async function loadConfig() {
+function loadConfig() {
   try {
-    if (hasExtensionStorage) {
-      const stored = await chrome.storage.sync.get("config");
-      CONFIG = { ...DEFAULTS, ...(stored.config || {}) };
-    } else {
-      const raw = localStorage.getItem(LOCAL_KEY);
-      if (raw) CONFIG = { ...DEFAULTS, ...JSON.parse(raw) };
-    }
+    const raw = localStorage.getItem(LOCAL_KEY);
+    if (raw) CONFIG = { ...DEFAULTS, ...JSON.parse(raw) };
   } catch (err) {
     console.warn("config load failed, using defaults", err);
   }
 }
 
 function saveConfig() {
-  if (hasExtensionStorage) {
-    chrome.storage.sync.set({ config: CONFIG }).catch(err => {
-      console.warn("failed to save config", err);
-      msg("warning: config did not sync");
-    });
-  } else {
-    try {
-      localStorage.setItem(LOCAL_KEY, JSON.stringify(CONFIG));
-    } catch (err) {
-      console.warn("localStorage save failed", err);
-    }
+  try {
+    localStorage.setItem(LOCAL_KEY, JSON.stringify(CONFIG));
+  } catch (err) {
+    console.warn("localStorage save failed", err);
   }
-}
-
-if (hasExtensionStorage && chrome.storage.onChanged) {
-  chrome.storage.onChanged.addListener((changes, area) => {
-    if (area === "sync" && changes.config) {
-      CONFIG = { ...DEFAULTS, ...changes.config.newValue };
-      applyTheme();
-      updateClock();
-    }
-  });
 }
 
 document.addEventListener("keydown", (e) => {
@@ -387,9 +364,7 @@ function claimFocus() {
 }
 
 loadHistory();
+loadConfig();
+applyTheme();
+updateClock();
 claimFocus();
-loadConfig().then(() => {
-  applyTheme();
-  updateClock();
-  claimFocus();
-});
