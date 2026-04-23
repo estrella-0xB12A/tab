@@ -66,3 +66,28 @@ main {
   word-break: break-word;
   text-align: center;
 }
+
+#clock {
+  position: fixed;
+  bottom: 1rem;
+  right: 1.25rem;
+  font-size: 0.9rem;
+  color: var(--dim);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+  user-select: none;
+  pointer-events: none;
+}
+
+#clock[hidden] { display: none; }
+
+@media (prefers-reduced-motion: no-preference) {
+  main, #clock {
+    animation: fade-in 180ms ease-out;
+  }
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}

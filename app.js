@@ -4,14 +4,25 @@ const DEFAULTS = {
   defaultCommand: "g",
   alwaysNewTab: false,
   links: [],
+  bgColor: "#0c0c0c",
+  textColor: "#dadde1",
+  fontSize: "1.75rem",
+  showClock: false,
+  militaryClock: false,
 };
 
 let CONFIG = { ...DEFAULTS };
-let lastInput = "";
 let messageTimer = null;
+
+const HISTORY_KEY = "tab-history";
+const HISTORY_MAX = 50;
+let history = [];
+let historyIndex = -1;
+let draft = "";
 
 const input = document.getElementById("input");
 const messageEl = document.getElementById("message");
+const clockEl = document.getElementById("clock");
 
 const commands = {
   g:   args => args.length ? `https://www.google.com/search?q=${enc(args)}` : "https://www.google.com",
@@ -34,7 +45,6 @@ function enc(args) {
 
 function handleInput(raw) {
   if (!raw.trim()) return;
-  lastInput = raw;
 
   let trimmed = raw.trim();
   let newTab = CONFIG.alwaysNewTab;
@@ -99,8 +109,44 @@ function ensureProtocol(s) {
 }
 
 function setProp(args) {
-  if (!args.length) return msg("usage: set;<property>;<value>\nproperties: defaultCommand, newtab, reset");
+  if (!args.length) {
+    return msg("usage: set;<property>;<value>\nproperties: bgColor, textColor, fontSize, clock, defaultCommand, newtab, reset");
+  }
   const [prop, value] = args;
+
+  if (prop === "bgColor" || prop === "textColor") {
+    if (value === undefined) return msg(`${prop}: ${CONFIG[prop]}`);
+    if (!/^#[0-9a-f]{3}(?:[0-9a-f]{3})?$/i.test(value)) return msg("invalid hex color (#rgb or #rrggbb)");
+    CONFIG[prop] = value;
+    applyTheme();
+    saveConfig();
+    return msg(`${prop} → ${value}`);
+  }
+
+  if (prop === "fontSize") {
+    if (value === undefined) return msg(`fontSize: ${CONFIG.fontSize}`);
+    if (!/^[\d.]+(rem|em|px|%)$/.test(value)) return msg("invalid size (use rem, em, px, or %)");
+    CONFIG.fontSize = value;
+    applyTheme();
+    saveConfig();
+    return msg(`fontSize → ${value}`);
+  }
+
+  if (prop === "clock") {
+    if (value === undefined) {
+      return msg(`clock: ${CONFIG.showClock ? "on" : "off"}, ${CONFIG.militaryClock ? "24h" : "12h"}`);
+    }
+    switch (value) {
+      case "on":  CONFIG.showClock = true; break;
+      case "off": CONFIG.showClock = false; break;
+      case "12":  CONFIG.militaryClock = false; break;
+      case "24":  CONFIG.militaryClock = true; break;
+      default:    return msg("must be on, off, 12, or 24");
+    }
+    updateClock();
+    saveConfig();
+    return msg(`clock → ${value}`);
+  }
 
   if (prop === "defaultCommand") {
     if (value === undefined) return msg(`defaultCommand: ${CONFIG.defaultCommand}`);
@@ -119,6 +165,8 @@ function setProp(args) {
 
   if (prop === "reset") {
     CONFIG = { ...DEFAULTS };
+    applyTheme();
+    updateClock();
     saveConfig();
     return msg("reset to defaults");
   }
@@ -180,14 +228,61 @@ function showHelp() {
     "  gm;<query> — gmail",
     "",
     "meta",
-    "  set;<prop>;<value> — defaultCommand | newtab | reset",
+    "  set;<prop>;<value>",
+    "    bgColor | textColor | fontSize",
+    "    clock (on | off | 12 | 24)",
+    "    defaultCommand | newtab | reset",
     "  link;add;<name>;<url>;[search]",
     "  link;show · link;delete;<name>",
     "",
     ";n at end → open in new tab",
-    "↑ recall · esc clear",
+    "↑ / ↓ history · esc clear",
   ].join("\n");
   msg(help, 45000);
+}
+
+function applyTheme() {
+  const root = document.documentElement;
+  root.style.setProperty("--bg", CONFIG.bgColor);
+  root.style.setProperty("--text", CONFIG.textColor);
+  document.body.style.fontSize = CONFIG.fontSize;
+}
+
+function updateClock() {
+  if (!CONFIG.showClock) {
+    clockEl.hidden = true;
+    return;
+  }
+  clockEl.hidden = false;
+  const d = new Date();
+  const minutes = String(d.getMinutes()).padStart(2, "0");
+  if (CONFIG.militaryClock) {
+    clockEl.textContent = `${String(d.getHours()).padStart(2, "0")}:${minutes}`;
+  } else {
+    const h24 = d.getHours();
+    const ampm = h24 >= 12 ? "pm" : "am";
+    const h = h24 % 12 || 12;
+    clockEl.textContent = `${h}:${minutes} ${ampm}`;
+  }
+}
+setInterval(updateClock, 1000);
+
+function loadHistory() {
+  try {
+    const raw = localStorage.getItem(HISTORY_KEY);
+    history = raw ? JSON.parse(raw) : [];
+  } catch {
+    history = [];
+  }
+}
+
+function pushHistory(cmd) {
+  if (history[history.length - 1] === cmd) return;
+  history.push(cmd);
+  if (history.length > HISTORY_MAX) history.shift();
+  try {
+    localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
+  } catch {}
 }
 
 const hasExtensionStorage = typeof chrome !== "undefined" && chrome?.storage?.sync;
@@ -226,6 +321,8 @@ if (hasExtensionStorage && chrome.storage.onChanged) {
   chrome.storage.onChanged.addListener((changes, area) => {
     if (area === "sync" && changes.config) {
       CONFIG = { ...DEFAULTS, ...changes.config.newValue };
+      applyTheme();
+      updateClock();
     }
   });
 }
@@ -238,13 +335,36 @@ document.addEventListener("keydown", (e) => {
   if (e.key === "Enter") {
     const value = input.value;
     input.value = "";
+    historyIndex = -1;
+    draft = "";
+    if (value.trim()) pushHistory(value);
     handleInput(value);
-  } else if (e.key === "ArrowUp" && lastInput && document.activeElement === input) {
+  } else if (e.key === "ArrowUp" && document.activeElement === input) {
+    if (history.length === 0) return;
     e.preventDefault();
-    input.value = lastInput;
+    if (historyIndex === -1) {
+      draft = input.value;
+      historyIndex = history.length - 1;
+    } else if (historyIndex > 0) {
+      historyIndex--;
+    }
+    input.value = history[historyIndex];
+    setTimeout(() => input.setSelectionRange(input.value.length, input.value.length), 0);
+  } else if (e.key === "ArrowDown" && document.activeElement === input) {
+    if (historyIndex === -1) return;
+    e.preventDefault();
+    if (historyIndex < history.length - 1) {
+      historyIndex++;
+      input.value = history[historyIndex];
+    } else {
+      historyIndex = -1;
+      input.value = draft;
+    }
     setTimeout(() => input.setSelectionRange(input.value.length, input.value.length), 0);
   } else if (e.key === "Escape") {
     input.value = "";
+    historyIndex = -1;
+    draft = "";
     msg("", 0);
   }
 });
@@ -266,5 +386,10 @@ function claimFocus() {
   tick();
 }
 
+loadHistory();
 claimFocus();
-loadConfig().then(claimFocus);
+loadConfig().then(() => {
+  applyTheme();
+  updateClock();
+  claimFocus();
+});
